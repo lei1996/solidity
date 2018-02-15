@@ -5893,10 +5893,11 @@ BOOST_AUTO_TEST_CASE(inline_assembly_unbalanced_negative_stack)
 BOOST_AUTO_TEST_CASE(inline_assembly_unbalanced_two_stack_load)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract c {
 			uint8 x;
 			function f() public {
-				assembly { x pop }
+				assembly { pop(x) }
 			}
 		}
 	)";
@@ -5906,6 +5907,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_unbalanced_two_stack_load)
 BOOST_AUTO_TEST_CASE(inline_assembly_in_modifier)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			modifier m {
 				uint a = 1;
@@ -5914,7 +5916,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_in_modifier)
 				}
 				_;
 			}
-			function f() m {
+			function f() public m {
 			}
 		}
 	)";
@@ -5924,6 +5926,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_in_modifier)
 BOOST_AUTO_TEST_CASE(inline_assembly_storage)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint x = 1;
 			function f() public {
@@ -5939,6 +5942,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_storage)
 BOOST_AUTO_TEST_CASE(inline_assembly_storage_in_modifiers)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint x = 1;
 			modifier m {
@@ -5947,7 +5951,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_storage_in_modifiers)
 				}
 				_;
 			}
-			function f() m {
+			function f() public m {
 			}
 		}
 	)";
@@ -5957,6 +5961,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_storage_in_modifiers)
 BOOST_AUTO_TEST_CASE(inline_assembly_constant_assign)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint constant x = 1;
 			function f() public {
@@ -5972,6 +5977,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_constant_assign)
 BOOST_AUTO_TEST_CASE(inline_assembly_constant_access)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint constant x = 1;
 			function f() public {
@@ -5987,6 +5993,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_constant_access)
 BOOST_AUTO_TEST_CASE(inline_assembly_local_variable_access_out_of_functions)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			function f() public {
 				uint a;
@@ -6002,6 +6009,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_local_variable_access_out_of_functions)
 BOOST_AUTO_TEST_CASE(inline_assembly_local_variable_access_out_of_functions_storage_ptr)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint[] r;
 			function f() public {
@@ -6018,6 +6026,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_local_variable_access_out_of_functions_stor
 BOOST_AUTO_TEST_CASE(inline_assembly_storage_variable_access_out_of_functions)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract test {
 			uint a;
 			function f() pure public {
@@ -6027,7 +6036,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_storage_variable_access_out_of_functions)
 			}
 		}
 	)";
-	CHECK_SUCCESS_NO_WARNINGS(text);
+	CHECK_WARNING(text, "Experimental features are turned on");
 }
 
 BOOST_AUTO_TEST_CASE(inline_assembly_constant_variable_via_offset)
@@ -6048,6 +6057,7 @@ BOOST_AUTO_TEST_CASE(inline_assembly_constant_variable_via_offset)
 BOOST_AUTO_TEST_CASE(inline_assembly_calldata_variables)
 {
 	char const* text = R"(
+		pragma experimental "v0.5.0";
 		contract C {
 			function f(bytes bytesAsCalldata) external {
 				assembly {
@@ -6057,6 +6067,187 @@ BOOST_AUTO_TEST_CASE(inline_assembly_calldata_variables)
 		}
 	)";
 	CHECK_ERROR(text, TypeError, "Call data elements cannot be accessed directly.");
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_050_literals_on_stack)
+{
+	char const* text = R"(
+		pragma experimental "v0.5.0";
+		contract C {
+			function f() pure public {
+				assembly {
+					1
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "Experimental features are turned on"},
+		{Error::Type::SyntaxError, "are not supposed to return"},
+		{Error::Type::DeclarationError, "Unbalanced stack"},
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_literals_on_stack)
+{
+	char const* text = R"(
+		contract C {
+			function f() pure public {
+				assembly {
+					1
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "are not supposed to return"},
+		{Error::Type::DeclarationError, "Unbalanced stack"},
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_050_bare_instructions)
+{
+	char const* text = R"(
+		pragma experimental "v0.5.0";
+		contract C {
+			function f() view public {
+				assembly {
+					address
+					pop
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::SyntaxError, "The use of non-functional"},
+		{Error::Type::SyntaxError, "The use of non-functional"},
+		{Error::Type::Warning, "Experimental features are turned on"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_bare_instructions)
+{
+	char const* text = R"(
+		contract C {
+			function f() view public {
+				assembly {
+					address
+					pop
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "The use of non-functional"},
+		{Error::Type::Warning, "The use of non-functional"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_050_labels)
+{
+	char const* text = R"(
+		pragma experimental "v0.5.0";
+		contract C {
+			function f() pure public {
+				assembly {
+					label:
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "Experimental features are turned on"},
+		{Error::Type::SyntaxError, "Jump instructions and labels are low-level"},
+		{Error::Type::SyntaxError, "The use of labels is deprecated"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_labels)
+{
+	char const* text = R"(
+		contract C {
+			function f() pure public {
+				assembly {
+					label:
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "Jump instructions and labels are low-level"},
+		{Error::Type::Warning, "The use of labels is deprecated"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_050_jump)
+{
+	char const* text = R"(
+		pragma experimental "v0.5.0";
+		contract C {
+			function f() pure public {
+				assembly {
+					jump(2)
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "Experimental features are turned on"},
+		{Error::Type::SyntaxError, "Jump instructions and labels are low-level"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_jump)
+{
+	char const* text = R"(
+		contract C {
+			function f() pure public {
+				assembly {
+					jump(2)
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::TypeError, "Function declared as pure"},
+		{Error::Type::Warning, "Jump instructions and labels are low-level"}
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_050_leave_items_on_stack)
+{
+	char const* text = R"(
+		pragma experimental "v0.5.0";
+		contract C {
+			function f() pure public {
+				assembly {
+					mload(0)
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "Experimental features are turned on"},
+		{Error::Type::SyntaxError, "are not supposed to return"},
+		{Error::Type::DeclarationError, "Unbalanced stack"},
+	}));
+}
+
+BOOST_AUTO_TEST_CASE(inline_assembly_leave_items_on_stack)
+{
+	char const* text = R"(
+		contract C {
+			function f() pure public {
+				assembly {
+					mload(0)
+				}
+			}
+		}
+	)";
+	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
+		{Error::Type::Warning, "are not supposed to return"},
+		{Error::Type::DeclarationError, "Unbalanced stack"},
+	}));
 }
 
 BOOST_AUTO_TEST_CASE(invalid_mobile_type)
@@ -7104,6 +7295,7 @@ BOOST_AUTO_TEST_CASE(returndatacopy_as_variable)
 	)";
 	vector<pair<Error::Type, std::string>> expectations(vector<pair<Error::Type, std::string>>{
 		{Error::Type::Warning, "Variable is shadowed in inline assembly by an instruction of the same name"},
+		{Error::Type::Warning, "The use of non-functional instructions is deprecated."},
 		{Error::Type::DeclarationError, "Unbalanced stack"}
 	});
 	if (!dev::test::Options::get().evmVersion().supportsReturndata())
@@ -7119,7 +7311,8 @@ BOOST_AUTO_TEST_CASE(create2_as_variable)
 	CHECK_ALLOW_MULTI(text, (std::vector<std::pair<Error::Type, std::string>>{
 		{Error::Type::Warning, "Variable is shadowed in inline assembly by an instruction of the same name"},
 		{Error::Type::Warning, "The \"create2\" instruction is not supported by the VM version"},
-		{Error::Type::DeclarationError, "Unbalanced stack"}
+		{Error::Type::DeclarationError, "Unbalanced stack"},
+		{Error::Type::Warning, "not supposed to return values"}
 	}));
 }
 
