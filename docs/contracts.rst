@@ -40,7 +40,7 @@ This means that cyclic creation dependencies are impossible.
 
 ::
 
-    pragma solidity ^0.4.21;
+    pragma solidity ^0.4.20; // should actually be 0.4.21
 
     contract OwnedToken {
         // TokenCreator is a contract type that is defined below.
@@ -964,7 +964,7 @@ Constructor functions can be either ``public`` or ``internal``.
 
 ::
 
-    pragma solidity ^0.5.0;
+    pragma solidity ^0.4.20; // should actually be 0.4.21
 
     contract A {
         uint public a;
@@ -980,7 +980,8 @@ Constructor functions can be either ``public`` or ``internal``.
 
 A constructor set as ``internal`` causes the contract to be marked as :ref:`abstract <abstract-contract>`.
 
-Prior to Version 0.5.0, constructors were defined as functions with the same name as the contract. This syntax is now deprecated.
+.. note ::
+    Prior to version 0.4.21, constructors were defined as functions with the same name as the contract. This syntax is now deprecated.
 
 ::
 
