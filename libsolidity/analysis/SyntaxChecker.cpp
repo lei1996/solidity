@@ -233,7 +233,20 @@ bool SyntaxChecker::visit(FunctionDefinition const& _function)
 		// In this case the function name will be non-emptpy, whereas it will be empty for
 		// constructors using the new syntax.
 		if (_function.isConstructor() && !_function.name().empty())
-			m_errorReporter.syntaxError(_function.location(), "Functions are not allowed to have the same name as the contract.");
+			m_errorReporter.syntaxError(
+				_function.location(),
+				"Functions are not allowed to have the same name as the contract. "
+				"For constructors use the \"constructor\" keyword instead."
+			);
+	}
+	else
+	{
+		if (_function.isConstructor() && !_function.name().empty())
+			m_errorReporter.warning(
+				_function.location(),
+				"Defining constructors as functions with the same name as the contract is deprecated. "
+				"Use the \"constructor\" keyword instead."
+			);
 	}
 	return true;
 }
