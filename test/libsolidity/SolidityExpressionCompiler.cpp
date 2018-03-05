@@ -498,6 +498,32 @@ BOOST_AUTO_TEST_CASE(intermediately_overflowing_literals)
 	BOOST_CHECK_EQUAL_COLLECTIONS(code.begin(), code.end(), expectation.begin(), expectation.end());
 }
 
+BOOST_AUTO_TEST_CASE(blockhash)
+{
+	char const* sourceCode = R"(
+		contract test {
+			function f() {
+				blockhash(3);
+			}
+		}
+	)";
+
+	bytes code = compileFirstExpression(sourceCode, {}, {},
+										{make_shared<MagicVariableDeclaration>(
+											"blockhash", 
+											make_shared<FunctionType>(
+												strings{"uint256"}, 
+												strings{"bytes32"}, 
+												FunctionType::Kind::BlockHash, 
+												false, 
+												StateMutability::View))
+										});
+
+	bytes expectation({byte(Instruction::PUSH1), 0x03,
+					   byte(Instruction::BLOCKHASH)});
+	BOOST_CHECK_EQUAL_COLLECTIONS(code.begin(), code.end(), expectation.begin(), expectation.end());
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 }
