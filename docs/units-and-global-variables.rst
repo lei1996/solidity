@@ -72,7 +72,7 @@ Block and Transaction Properties
     This includes calls to library functions.
 
 .. note::
-    Do not rely on ``block.timestamp``, ``now`` and ``block.blockhash`` as a source of randomness,
+    Do not rely on ``block.timestamp``, ``now`` and ``blockhash`` as a source of randomness,
     unless you know what you are doing.
 
     Both the timestamp and the block hash can be influenced by miners to some degree.
