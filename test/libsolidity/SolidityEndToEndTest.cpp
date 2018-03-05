@@ -1785,16 +1785,13 @@ BOOST_AUTO_TEST_CASE(blockhash_global_level)
 {
 	char const* sourceCode = R"(
 		contract Test {
-			function a() {
-				blockhash(0);
+			function a() public returns (bytes32) {
+				return blockhash(0);
 			}
 		}
 	)";
  	compileAndRun(sourceCode);
-	callContractFunction("a()");
-	BOOST_REQUIRE_EQUAL(m_logs.size(), 1);
-	BOOST_CHECK_EQUAL(m_logs[0].address, m_contractAddress);
-	BOOST_CHECK_EQUAL(h256(m_logs[0].data), h256(u256(1)));
+	BOOST_CHECK_EQUAL(callContractFunction("a()").empty(), false);
 }
 
 BOOST_AUTO_TEST_CASE(log0)
