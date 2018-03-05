@@ -8155,6 +8155,16 @@ BOOST_AUTO_TEST_CASE(blockhash_not_available_in_block)
  	CHECK_ERROR(text, TypeError, "Member \"blockhash\" not found or not visible after argument-dependent lookup in block");
 }
 
+BOOST_AUTO_TEST_CASE(blockhash_local_shadow)
+{
+	char const* text = R"(
+		contract test {
+			function blockhash() pure public returns (bytes32) {}
+		}
+	)";
+	CHECK_WARNING(text, "This declaration shadows a builtin symbol.");
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 }
